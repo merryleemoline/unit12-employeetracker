@@ -98,7 +98,6 @@ function addEmployee() {
 
         ])
         .then(function (answer) {
-            // when finished prompting, insert a new item into the db with that info
             connection.query(
                 "INSERT INTO employees SET ?",
                 {
@@ -110,14 +109,12 @@ function addEmployee() {
                 function (err) {
                     if (err) throw err;
                     console.log("Your employee was created successfully!");
-                    // re-prompt the user for if they want to bid or ADD
                     start();
                 }
             );
         });
 }
 function addRole() {
-    // prompt for info about the item being put up for employee
     inquirer
         .prompt([
             {
@@ -137,7 +134,6 @@ function addRole() {
             },
         ])
         .then(function (answer) {
-            // when finished prompting, insert a new item into the db with that info
             connection.query(
                 "INSERT INTO roles SET ?",
                 {
@@ -147,15 +143,13 @@ function addRole() {
                 },
                 function (err) {
                     if (err) throw err;
-                    console.log("Your role was created successfully!");
-                    // re-prompt the user for if they want to bid or ADD
+                    console.log("Your role was created successfully!")
                     start();
                 }
             );
         });
 }
 function addDepartment() {
-    // prompt for info about the item being put up for employee
     inquirer
         .prompt([
             {
@@ -165,7 +159,6 @@ function addDepartment() {
             }
         ])
         .then(function (answer) {
-            // when finished prompting, insert a new item into the db with that info
             connection.query(
                 "INSERT INTO departments SET ?",
                 {
@@ -174,7 +167,6 @@ function addDepartment() {
                 function (err) {
                     if (err) throw err;
                     console.log("Your department was created successfully!");
-                    // re-prompt the user for if they want to bid or ADD
                     start();
                 }
             );
@@ -183,7 +175,6 @@ function addDepartment() {
 
 
 function viewEmployees() {
-    // query the database for all items being employeeed
     connection.query("SELECT * FROM employees", function (err, results) {
         if (err) throw err;
         console.table(results);
@@ -191,7 +182,6 @@ function viewEmployees() {
     })
 }
 function viewRoles() {
-    // query the database for all items being employeeed
     connection.query("SELECT * FROM roles", function (err, results) {
         if (err) throw err;
         console.table(results);
@@ -199,7 +189,6 @@ function viewRoles() {
     })
 }
 function viewDepartments() {
-    // query the database for all items being employeeed
     connection.query("SELECT * FROM departments", function (err, results) {
         if (err) throw err;
         console.table(results);
@@ -210,93 +199,29 @@ function viewDepartments() {
 
 // -------------------------------------------------
 function updateEmployeeRole() {
-    // prompt for info about the item being put up for employee
     inquirer
         .prompt([
             {
-                name: "name",
-                type: "input",
-                message: "Enter the name of the employee you would like to update."
-            }
-        ])
-        .then(function (answer) {
-            // get the information of the chosen item
-            var chosenItem;
-            for (var i = 0; i < results.length; i++) {
-                if (results[i].item_name === answer.choice) {
-                    chosenItem = results[i];
-                }
-
-
-
-            // when finished prompting, insert a new item into the db with that info
-            connection.query(
-                "INSERT INTO departments SET ?",
-                {
-                    name: answer.name,
+                name: "choice",
+                type: "rawlist",
+                choices: function() {
+                  var choiceArray = [];
+                  for (var i = 0; i < results.length; i++) {
+                    choiceArray.push({
+                      name: `${results[i].item_name} current bid: ${results[i].highest_bid}`,
+                      value: results[i]
+                    });
+                  }
+                  return choiceArray;
                 },
-                function (err) {
-                    if (err) throw err;
-                    console.log("Your department was created successfully!");
-                    // re-prompt the user for if they want to bid or ADD
-                    start();
-                }
-            );
-        });
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// once you have the items, prompt the user for which they'd like to bid on
-inquirer
-    .prompt([
-        {
-            name: "bid",
-            type: "input",
-            message: "How much would you like to bid?"
-        }
-    ])
-    .then(function (answer) {
-        // get the information of the chosen item
-        var chosenItem;
-        for (var i = 0; i < results.length; i++) {
-            if (results[i].item_name === answer.choice) {
-                chosenItem = results[i];
-            }
-        }
-
-        // determine if bid was high enough
-        if (chosenItem.highest_bid < parseInt(answer.bid)) {
-            // bid was high enough, so update db, let the user know, and start over
-            connection.query(
-                "UPDATE employees SET ? WHERE ?",
-                [
-                    {
-                        role_id: answer.bid
-                    },
-                    {
-                        id: chosenItem.id
-                    }
-                ],
-                function (error) {
-                    if (error) throw err;
-                    console.log("Bid placed successfully!");
-                    start();
-                }
-            );
-        }
+                message: "What auction would you like to place a bid in?"
+              },
+              {
+                name: "bid",
+                type: "input",
+                message: "How much would you like to bid?"
+              }
+            ])
         else {
             // bid wasn't high enough, so apologize and start over
             console.log("Your bid was too low. Try again...");
