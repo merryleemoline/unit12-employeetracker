@@ -1,29 +1,18 @@
-// connect to the mysql server and sql database
 var mysql = require("mysql");
 var inquirer = require("inquirer");
 
-// create the connection information for the sql database
 var connection = mysql.createConnection({
     host: "localhost",
-
-    // Your port; if not 3306
     port: 3306,
-
-    // Your username
     user: "root",
-
-    // Your password
     password: "root",
     database: "employeeTracker_DB"
 });
 
 connection.connect(function (err) {
     if (err) throw err;
-    // run the start function after the connection is made to prompt the user
     start();
 });
-
-// function which prompts the user for what action they should take
 function start() {
     inquirer
         .prompt({
@@ -42,7 +31,6 @@ function start() {
             ]
         })
         .then(function (answer) {
-            // based on their answer, either call the bid or the ADD functions
             if (answer.userIntention === "View Employees") {
                 viewEmployees();
             }
@@ -70,9 +58,7 @@ function start() {
         });
 }
 
-// function to handle ADDing new items up for employee
 function addEmployee() {
-    // prompt for info about the item being put up for employee
     inquirer
         .prompt([
             {
@@ -195,38 +181,54 @@ function viewDepartments() {
         start();
     })
 }
-// -------------------------------------------------
-
-// -------------------------------------------------
+// -------------------------------------------------//
+//--------------UPDATE EMPLOYEE ROLE----------------//
+// -------------------------------------------------//
 function updateEmployeeRole() {
-    inquirer
-        .prompt([
-            {
-                name: "choice",
-                type: "rawlist",
-                choices: function() {
-                  var choiceArray = [];
-                  for (var i = 0; i < results.length; i++) {
-                    choiceArray.push({
-                      name: `${results[i].item_name} current bid: ${results[i].highest_bid}`,
-                      value: results[i]
-                    });
-                  }
-                  return choiceArray;
+    connection.query("SELECT * FROM employees", function (err, results) {
+        if (err) throw err;
+        inquirer
+            .prompt([
+                {
+                    name: "choice",
+                    type: "rawlist",
+                    choices: function () {
+                        var choiceArray = [];
+                        for (var i = 0; i < results.length; i++) {
+                            choiceArray.push(results[i].last_name + ", " + results[i].first_name);
+                        }
+                        return choiceArray;
+                    },
+                    message: "Which employee would you like to update?"
                 },
-                message: "What auction would you like to place a bid in?"
-              },
-              {
-                name: "bid",
-                type: "input",
-                message: "How much would you like to bid?"
-              }
+                {
+                    name: "role_id",
+                    type: "input",
+                    message: "To what Role ID would you like to change this employee?"
+                }
             ])
-        else {
-            // bid wasn't high enough, so apologize and start over
-            console.log("Your bid was too low. Try again...");
-            start();
-        }
-    });
-
-
+            .then(function (answer) {
+                var chosenEmployee;
+                for (var i = 0; i < results.length; i++) {
+                    if (results[i].last_name + ", " + results[i].first_name === answer.choice) {
+                        chosenEmployee = results[i];
+                    }
+                }
+                connection.query("UPDATE employees SET ? WHERE ?",
+                    [
+                        {
+                            role_id: answer.role_id
+                        },
+                        {
+                            id: chosenEmployee.id
+                        }
+                    ],
+                    function (error) {
+                        if (error) throw err;
+                        console.log(chosenEmployee.first_name + " " + chosenEmployee.last_name + " --> Role ID: " + answer.role_id)
+                        console.log("Employee role changed successfully!");
+                        start();
+                    });
+            });
+    })
+}
